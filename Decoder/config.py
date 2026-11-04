@@ -1,3 +1,4 @@
+import os
 import torch
 
 # hyperparameters
@@ -13,4 +14,5 @@ n_head = 6 # h in the paper
 n_layer = 6 # N in the paper (number of stacked decoder blocks)
 dropout = 0.2 # P_drop in the paper (section 5.4)
 positional_encoding = 'learned' # 'learned' (GPT style) or 'sinusoidal' (paper section 3.5)
+checkpoint_path = os.path.join(os.path.dirname(__file__), 'checkpoints', 'model.pt') # best model (lowest val loss)
 # ------------

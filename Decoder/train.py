@@ -1,8 +1,9 @@
+import os
 import torch
 
 from config import (batch_size, block_size, max_iters, eval_interval, learning_rate, device,
-                    eval_iters, n_embd, n_head, n_layer, dropout, positional_encoding)
-from data import vocab_size, decode, get_batch
+                    eval_iters, n_embd, n_head, n_layer, dropout, positional_encoding, checkpoint_path)
+from data import chars, vocab_size, decode, get_batch
 from model import GPTLanguageModel
 
 torch.manual_seed(1337)
@@ -21,7 +22,20 @@ def estimate_loss():
     model.train()
     return out
 
-model = GPTLanguageModel(vocab_size, n_embd, n_head, n_layer, block_size, dropout, positional_encoding)
+def save_checkpoint(iter, val_loss):
+    # everything generate.py needs to rebuild the model without input.txt
+    os.makedirs(os.path.dirname(checkpoint_path), exist_ok=True)
+    torch.save({
+        'model': model.state_dict(),
+        'model_args': model_args,
+        'chars': chars, # vocabulary: token id i <-> chars[i]
+        'iter': iter,
+        'val_loss': val_loss,
+    }, checkpoint_path)
+
+model_args = dict(vocab_size=vocab_size, n_embd=n_embd, n_head=n_head, n_layer=n_layer,
+                  block_size=block_size, dropout=dropout, positional_encoding=positional_encoding)
+model = GPTLanguageModel(**model_args)
 m = model.to(device)
 # print the number of parameters in the model
 print(sum(p.numel() for p in m.parameters())/1e6, 'M parameters')
@@ -29,12 +43,18 @@ print(sum(p.numel() for p in m.parameters())/1e6, 'M parameters')
 # create a PyTorch optimizer
 optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
 
+best_val_loss = float('inf')
 for iter in range(max_iters):
 
     # every once in a while evaluate the loss on train and val sets
     if iter % eval_interval == 0 or iter == max_iters - 1:
         losses = estimate_loss()
         print(f"step {iter}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}")
+        # keep only the best model: past a point the train loss keeps falling but val loss rises (overfitting)
+        if losses['val'] < best_val_loss:
+            best_val_loss = losses['val'].item()
+            save_checkpoint(iter, best_val_loss)
+            print(f"  saved checkpoint (val loss {best_val_loss:.4f}) to {checkpoint_path}")
 
     # sample a batch of data
     xb, yb = get_batch('train')

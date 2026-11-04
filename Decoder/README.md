@@ -15,7 +15,10 @@ Decoder/
 ├── data.py                    tokenizer, train/val split, get_batch
 ├── decoder_block.py           joins layers: LayerNorm → MaskedMHA → + → LayerNorm → FFN → +
 ├── model.py                   joins everything: embedding + PE → 6× DecoderBlock → LN → Linear → Softmax
-├── train.py                   training loop + text generation
+├── train.py                   training loop; saves the best model to checkpoints/model.pt
+├── generate.py                loads the checkpoint and continues your own text
+├── checkpoints/               created by train.py (git-ignored)
+│   └── model.pt
 ├── layers/
 │   ├── __init__.py
 │   ├── output_embedding.py
@@ -131,6 +134,29 @@ python train.py
 The script prints the parameter count, train/val loss every 500 steps, and finally 500
 characters of generated text. Training on CPU is very slow at these settings; reduce
 `n_layer`, `n_embd`, `block_size` or `max_iters` in `config.py` for a quick run.
+
+Whenever the validation loss improves, `train.py` saves `checkpoints/model.pt` containing the
+weights, the model hyperparameters and the character vocabulary. Validation loss bottoms out
+around step 3000 and then rises (overfitting), so the saved file is the best model, not the last one.
+
+## Generate from your own text
+
+```powershell
+python generate.py "ROMEO:\nWhat light"                  # continue a prompt (\n = line break)
+python generate.py "KING:" --max_new_tokens 1000 --seed 42
+python generate.py                                       # interactive: type prompts, Ctrl+C to quit
+```
+
+| Option | Default | Meaning |
+|---|---|---|
+| `prompt` | none (interactive) | text the model continues |
+| `--max_new_tokens` | 500 | characters to generate |
+| `--seed` | random | fix sampling for repeatable output |
+| `--checkpoint` | `checkpoints/model.pt` | which saved model to load |
+
+The prompt may only use the 65 characters found in `input.txt`: `A–Z`, `a–z`, space, newline,
+`! $ & ' , - . 3 : ; ?` (no other digits). Any other character is reported and rejected. `generate.py` does
+not need `input.txt`: the vocabulary is stored in the checkpoint.
 
 ## Regenerating the diagram
 
