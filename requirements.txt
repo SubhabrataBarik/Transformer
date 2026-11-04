@@ -1,0 +1,5 @@
+# gpt.py only imports torch (torch, torch.nn, torch.nn.functional).
+# CUDA 12.8 build: required for Blackwell (sm_120) GPUs; PyPI's Windows wheel is CPU-only.
+--extra-index-url https://download.pytorch.org/whl/cu128
+torch==2.7.1+cu128
+numpy  # not used by gpt.py; silences torch's "Failed to initialize NumPy" warning
