@@ -33,7 +33,7 @@ Decoder/
 
 | Figure 1 box | Paper section | File | Class / function |
 |---|---|---|---|
-| Outputs (shifted right) | 3 | `data.py` | `get_batch` — target `y` is input `x` shifted by one |
+| Outputs (shifted right) | 3.1 | `data.py` | `get_batch` — target `y` is input `x` shifted by one |
 | Output Embedding | 3.4 | `layers/output_embedding.py` | `OutputEmbedding` |
 | Positional Encoding | 3.5 | `layers/positional_encoding.py` | `PositionalEncoding` (sinusoidal), `LearnedPositionalEncoding` |
 | Scaled Dot-Product Attention (Fig. 2) | 3.2.1, eq. 1 | `layers/attention.py` | `scaled_dot_product_attention`, `Head` |
